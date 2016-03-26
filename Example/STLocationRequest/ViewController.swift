@@ -11,7 +11,7 @@ import STLocationRequest
 import CoreLocation
 import MapKit
 
-class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
+class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate, STLocationRequestControllerDelegate {
 	// Storyboard IBOutlet for the Request Location Button
 	@IBOutlet weak var requestLocationButton: UIButton!
 	
@@ -54,12 +54,17 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
 				if CLLocationManager.authorizationStatus() == .NotDetermined{
 					// The user has never been asked about his location show the locationRequest Screen
 					// Just play around with the setMapViewAlphaValue and setBackgroundViewColor parameters, to match with your design of your app
-					self.showLocationRequestController(
-						setTitle: "We need your location for some awesome features",
-						setAllowButtonTitle: "Alright",
-						setNotNowButtonTitle: "Not now",
-						setMapViewAlphaValue: 0.9,
-						setBackgroundViewColor: UIColor.lightGrayColor())
+					let viewController = STLocationRequestController.controller()
+                    
+                    viewController.titleLabelText = "We need your location for some awesome features"
+                    viewController.allowButtonTitle = "Alright"
+                    viewController.notNowButtonTitle = "Not now"
+                    viewController.mapViewAlphaValue = 0.9
+                    viewController.backgroundViewColor = .lightGrayColor()
+                    viewController.delegate = self
+                    
+                    presentViewController(viewController, animated: true, completion: nil)
+
 				} else {
 					// The user has already allowed your app to use location services
 					if #available(iOS 9.0, *) {
@@ -180,4 +185,17 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
 		UIGraphicsEndImageContext()
 		return image
 	}
+    
+    func locationRequestController(controller: STLocationRequestController, allow sender: AnyObject?) {
+        
+        print("Allowed!")
+        
+    }
+    
+    func locationRequestController(controller: STLocationRequestController, notNow sender: AnyObject?) {
+        
+        print("Denied!")
+        
+    }
+    
 }

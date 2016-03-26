@@ -12,12 +12,23 @@ import CoreLocation
 import MapKit
 import Font_Awesome_Swift
 
+public protocol STLocationRequestControllerDelegate: class {
+    
+    func locationRequestController(controller: STLocationRequestController, allow sender: AnyObject?)
+    
+    func locationRequestController(controller: STLocationRequestController, notNow sender: AnyObject?)
+    
+}
+
 public class STLocationRequestController: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate {
+    
 	@IBOutlet weak var allowButton: UIButton!
 	@IBOutlet weak var notNowButton: UIButton!
 	@IBOutlet weak var mapView: MKMapView!
 	@IBOutlet weak var descriptionLabel: UILabel!
 	@IBOutlet weak var locationSymbolLabel: UILabel!
+    
+    public weak var delegate: STLocationRequestControllerDelegate?
 	
 	// CitryCoordinate which store all coordinates
 	var cityCoordinates: [CLLocationCoordinate2D] = []
@@ -28,9 +39,6 @@ public class STLocationRequestController: UIViewController, MKMapViewDelegate, C
 	
 	// Initialize STRotatingCamera
 	var rotatingCamera = STRotatingCamera()
-	
-	// Initialize CLLocationManager
-	var locationManager = CLLocationManager()
 	var pulseEffect = LFTPulseAnimation(radius: 0, position: CGPointMake(0,0))
 	
 	// Variables for UILabel and UIButton
@@ -64,9 +72,6 @@ public class STLocationRequestController: UIViewController, MKMapViewDelegate, C
 		} else {
 			self.mapView.mapType = .Satellite
 		}
-		
-		// Set the Delegate of the locationManager
-		self.locationManager.delegate = self
 		
 		// Set the location-symbol using fontAwesom
 		self.locationSymbolLabel.setFAIcon(FAType.FALocationArrow, iconSize: 150)
@@ -119,26 +124,7 @@ public class STLocationRequestController: UIViewController, MKMapViewDelegate, C
 			self.pulseEffect.setPulseRadius(180)
 		}
 	}
-	
-	/*
-		CLLocationManager Delegate if the User allowed oder denied the location request
-	*/
-	public func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
-		switch status {
-		case .AuthorizedWhenInUse:
-			NSNotificationCenter.defaultCenter().postNotificationName("locationRequestAuthorized", object: nil)
-			self.dismissViewControllerAnimated(true, completion: nil)
-			break
-			
-		case .Denied:
-			NSNotificationCenter.defaultCenter().postNotificationName("locationRequestDenied", object: nil)
-			self.dismissViewControllerAnimated(true, completion: nil)
-			break
-			
-		default:
-			break
-		}
-	}
+    
 	
 	/*
 		MKMapView Delegate regionDidChangeAnimated
@@ -227,15 +213,30 @@ public class STLocationRequestController: UIViewController, MKMapViewDelegate, C
 	/*
 		Allow button was touched request authorization
 	*/
-	@IBAction func allowButtonTouched(sender: UIButton) {
-		self.locationManager.requestWhenInUseAuthorization()
-	}
+	@IBAction func allowButtonTouched(sender: UIButton) { delegate?.locationRequestController(self, allow: sender) }
 	
 	/*
 		Not now button was touched dismiss Viewcontroller
 	*/
-	@IBAction func notNowButtonTouched(sender: UIButton) {
-		NSNotificationCenter.defaultCenter().postNotificationName("locationRequestNotNow", object: nil)
-		self.dismissViewControllerAnimated(true, completion: nil)
-	}
+	@IBAction func notNowButtonTouched(sender: UIButton) { delegate?.locationRequestController(self, notNow: sender) }
+    
+}
+
+
+// MARK: - Initializer
+
+extension STLocationRequestController {
+    
+    public class func controller() -> STLocationRequestController {
+        
+        // Create the Bundle Path for Resources
+        let bundlePath = NSBundle(forClass: STLocationRequestController.self).pathForResource("STLocationRequest", ofType: "bundle")
+        
+        // Get the Storyboard File
+        let stb = UIStoryboard(name: "StoryboardLocationRequest", bundle:NSBundle(path: bundlePath!))
+        
+        return stb.instantiateViewControllerWithIdentifier("locationRequestController") as! STLocationRequestController
+        
+    }
+    
 }
